@@ -1,0 +1,12 @@
+# Added by the workshop factory kit. 'kit.sh remove' deletes exactly these paths.
+factory.sh
+doctor.sh
+lib
+.claude/agents/planner.md
+.claude/agents/builder.md
+.claude/agents/checker.md
+.claude/agents/reviewer.md
+dashboard
+gates/README.md
+factory.conf
+AGENTS.md
