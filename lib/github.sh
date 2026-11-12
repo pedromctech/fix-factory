@@ -109,7 +109,21 @@ write_pr_body() {  # write_pr_body <verdict> <file>
   rm -f "$2.tmp"
 }
 
-# open_pr <verdict>: commit, push to the fork, open the PR against the workshop repo.
+# sync_with_main: rebase the run's commit onto the latest main before pushing, then rerun the tests.
+# The latest main comes from upstream (the PR's base) when that remote exists, else from origin.
+sync_with_main() {
+  local remote="origin"
+  if git remote get-url upstream >/dev/null 2>&1; then remote="upstream"; fi
+  git fetch -q "$remote" main || die "could not fetch $remote/main: check your network, then run ./doctor.sh"
+  if ! git rebase -q "$remote/main" >/dev/null 2>&1; then
+    git rebase --abort >/dev/null 2>&1 || true
+    die "$BRANCH conflicts with the latest $remote/main: resolve it by hand on $BRANCH, then push"
+  fi
+  bash -c "$TEST_CMD" >/dev/null 2>&1 \
+    || die "tests fail on the latest $remote/main with this change ($TEST_CMD): fix them on $BRANCH, then push"
+}
+
+# open_pr <verdict>: commit, sync with main, push to the fork, open the PR against the workshop repo.
 open_pr() {
   local verdict="$1" body=".factory/pr-body.md" title="$ISSUE_TITLE" url result="pr"
   local -a draft=()
@@ -119,6 +133,7 @@ open_pr() {
     result="rejected"
   fi
   commit_run
+  sync_with_main
   write_pr_body "$verdict" "$body"
   git push -q --no-verify -u origin "$BRANCH" || die "could not push to your fork (origin): run ./doctor.sh"
   local -a create=(gh pr create --repo "$UPSTREAM" --base main --head "$FORK_OWNER:$BRANCH" --title "$title"
