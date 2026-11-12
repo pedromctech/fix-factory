@@ -1,0 +1,13 @@
+# Go build output
+/fix-factory
+/bin/
+
+# Local secrets and editor/OS noise
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+
+# Factory run state (the factory also writes .factory/.gitignore)
+.factory/
